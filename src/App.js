@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Blog from './components/Blog';
+import Toggable from './components/Toggable';
+import NewBlog from './components/NewBlog';
 import blogService from './services/blogs';
 import loginService from './services/login';
 import './App.css';
@@ -11,6 +13,7 @@ const App = () => {
   const [blog, setBlog] = useState({});
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const blogFormRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -53,16 +56,43 @@ const App = () => {
     setUser(null);
   };
 
-  const createBlog = async (event) => {
-    event.preventDefault();
+  const createBlog = async (blog) => {
     try {
       const response = await blogService.create(blog);
       setBlogs(blogs.concat(response));
       setBlog({});
+
+      blogFormRef.current.toggleVisibility();
       setSuccessMessage(response.title);
       setTimeout(() => {
         setSuccessMessage('');
       }, 5000);
+    } catch (exception) {}
+  };
+
+  const updateBlog = async (blog) => {
+    try {
+      const response = await blogService.update(blog);
+
+      setBlogs(
+        blogs.map((x) => {
+          if (x.id === response.id) {
+            return response;
+          }
+
+          return x;
+        })
+      );
+    } catch (exception) {}
+  };
+
+  const removeBlog = async (blog) => {
+    try {
+      await blogService.remove(blog);
+
+      const index = blogs.findIndex((x) => x.id === blog.id);
+
+      setBlogs([...blogs.slice(0, index), ...blogs.slice(index + 1)]);
     } catch (exception) {}
   };
 
@@ -113,45 +143,31 @@ const App = () => {
       <p>{user.root} logged in</p>
       <button onClick={handleLogout}>logout</button>
       <h2>Create New</h2>
-      <form onSubmit={createBlog}>
-        <div>
-          title
-          <input
-            type='text'
-            value={blog.title}
-            name='title'
-            onChange={({ target }) =>
-              setBlog({ ...blog, [target.name]: target.value })
-            }
+      <Toggable labelClosed='new blog' labelOpened='cancel' ref={blogFormRef}>
+        <NewBlog onSubmit={createBlog} blog={blog} setBlog={setBlog} />
+      </Toggable>
+      {blogs
+        .sort((a, b) => {
+          if (a.likes > b.likes) {
+            return -1;
+          }
+          if (a.likes < b.likes) {
+            return 1;
+          }
+          return 0;
+        })
+        .map((blog) => (
+          <Blog
+            key={blog.id}
+            blog={blog}
+            likeBlog={(newObject) => {
+              const modelNoUser = { ...newObject };
+              delete modelNoUser.user;
+              updateBlog(modelNoUser);
+            }}
+            removeBlog={removeBlog}
           />
-        </div>
-        <div>
-          author
-          <input
-            type='text'
-            value={blog.author}
-            name='author'
-            onChange={({ target }) =>
-              setBlog({ ...blog, [target.name]: target.value })
-            }
-          />
-        </div>
-        <div>
-          url
-          <input
-            type='text'
-            value={blog.url}
-            name='url'
-            onChange={({ target }) =>
-              setBlog({ ...blog, [target.name]: target.value })
-            }
-          />
-        </div>
-        <button type='submit'>Create</button>
-      </form>
-      {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
-      ))}
+        ))}
     </div>
   );
 };
