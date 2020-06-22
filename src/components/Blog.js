@@ -11,8 +11,10 @@ const Blog = ({ blog, likeBlog, removeBlog }) => {
 
   return (
     <div style={blogStyle}>
-      {blog.title}{' '}
+      <span className='title'>{blog.title}</span>{' '}
+      <span className='author'>{blog.author}</span>{' '}
       <button
+        className='toggle-button'
         onClick={() => {
           setOpen(!open);
         }}
@@ -21,10 +23,11 @@ const Blog = ({ blog, likeBlog, removeBlog }) => {
       </button>
       {open && (
         <>
-          <p>{blog.url}</p>
-          <p>
+          <p className='url'>{blog.url}</p>
+          <p className='likes'>
             {blog.likes}{' '}
             <button
+              className='like-button'
               onClick={() => {
                 likeBlog({ ...blog, likes: blog.likes + 1 });
               }}
