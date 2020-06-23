@@ -2,7 +2,7 @@ import React, { useState, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 
 const Toggable = React.forwardRef(
-  ({ labelClosed, labelOpened, children }, ref) => {
+  ({ labelClosed, labelOpened, className, children }, ref) => {
     const [open, setOpen] = useState(false);
 
     const toggleVisibility = () => {
@@ -18,7 +18,7 @@ const Toggable = React.forwardRef(
     return (
       <>
         {open && children}
-        <button onClick={toggleVisibility}>
+        <button onClick={toggleVisibility} className={className || ''}>
           {open ? labelOpened : labelClosed}
         </button>
       </>
